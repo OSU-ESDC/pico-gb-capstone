@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.13...3.23)
 
+
+#set(PICO_SDK_FETCH_FROM_GIT on)
+
 include(pico_sdk_import.cmake)
 
 project(RP2040_GB C CXX ASM)
