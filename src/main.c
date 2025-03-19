@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2022 by Mahyar Koshkouei <mk@deltabeard.com>
+ * Modified by Gabriel Rodgers <Embedded Systems Design Club @ OSU>
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted.
@@ -19,6 +20,11 @@
 #define ENABLE_SDCARD	1
 #define PEANUT_GB_HIGH_LCD_ACCURACY 1
 #define PEANUT_GB_USE_BIOS 0
+
+// Added settings
+#define ENABLE_JOYSTICk 0
+#define ENABLE_ROTARY_ENCODER 0
+#define ENABLE_PICO_LED 1
 
 /* Use DMA for all drawing to LCD. Benefits aren't fully realised at the moment
  * due to busy loops waiting for DMA completion. */
@@ -80,6 +86,14 @@
 #define GPIO_RS		20
 #define GPIO_RST	21
 #define GPIO_LED	22
+
+/* Added GPIO Connections. */
+#define GPIO_I2C0_SDA 	0
+#define GPIO_I2C0_SCL 	1
+#define GPIO_VOL_A	 	10
+#define GPIO_VOL_B	 	11
+#define GPIO_VOL_MUTE	16
+#define GPIO_PICO_LED	25
 
 #if ENABLE_SOUND
 /**
@@ -596,6 +610,13 @@ int main(void)
 	gpio_set_function(GPIO_RS, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_RST, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_LED, GPIO_FUNC_SIO);
+	// added
+	gpio_set_function(GPIO_I2C0_SDA, GPIO_FUNC_SIO);
+	gpio_set_function(GPIO_I2C0_SCL, GPIO_FUNC_SIO);
+	gpio_set_function(GPIO_VOL_A, GPIO_FUNC_SIO);
+	gpio_set_function(GPIO_VOL_B, GPIO_FUNC_SIO);
+	gpio_set_function(GPIO_VOL_MUTE, GPIO_FUNC_SIO);
+	gpio_set_function(GPIO_PICO_LED, GPIO_FUNC_SIO);
 
 	gpio_set_dir(GPIO_UP, false);
 	gpio_set_dir(GPIO_DOWN, false);
@@ -611,6 +632,13 @@ int main(void)
 	gpio_set_dir(GPIO_LED, true);
 	gpio_set_slew_rate(GPIO_CLK, GPIO_SLEW_RATE_FAST);
 	gpio_set_slew_rate(GPIO_SDA, GPIO_SLEW_RATE_FAST);
+	//added
+	gpio_set_dir(GPIO_I2C0_SDA, true); //set I2C0 SDA as output
+	gpio_set_dir(GPIO_I2C0_SCL, true);
+	gpio_set_dir(GPIO_VOL_A, false);   //set rotary encoder "A" as input
+	gpio_set_dir(GPIO_VOL_B, false);
+	gpio_set_dir(GPIO_VOL_MUTE, false);
+	gpio_set_dir(GPIO_PICO_LED, true);
 	
 	gpio_pull_up(GPIO_UP);
 	gpio_pull_up(GPIO_DOWN);
@@ -620,6 +648,9 @@ int main(void)
 	gpio_pull_up(GPIO_B);
 	gpio_pull_up(GPIO_SELECT);
 	gpio_pull_up(GPIO_START);
+	//added
+	gpio_pull_up(GPIO_I2C0_SDA);
+	gpio_pull_up(GPIO_I2C0_SCL);
 
 	/* Set SPI clock to use high frequency. */
 	clock_configure(clk_peri, 0,
@@ -627,6 +658,16 @@ int main(void)
 			125 * 1000 * 1000, 125 * 1000 * 1000);
 	spi_init(spi0, 30*1000*1000);
 	spi_set_format(spi0, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+
+	//added
+	/* Set I2C clock to use 100KHz or so. */
+
+//added
+#if ENABLE_PICO_LED
+	//turn on the on-board LED on the PICO
+	gpio_put(GPIO_PICO_LED, true);
+	sleep_ms(5000);
+#endif
 
 #if ENABLE_SOUND
 	// Allocate memory for the stream buffer
