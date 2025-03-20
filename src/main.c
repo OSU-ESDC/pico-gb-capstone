@@ -23,7 +23,7 @@
 
 // Added settings
 #define ENABLE_JOYSTICk 0
-#define ENABLE_ROTARY_ENCODER 0
+#define ENABLE_ROTARY_ENCODER 1
 #define ENABLE_PICO_LED 1
 
 /* Use DMA for all drawing to LCD. Benefits aren't fully realised at the moment
@@ -90,10 +90,33 @@
 /* Added GPIO Connections. */
 #define GPIO_I2C0_SDA 	0
 #define GPIO_I2C0_SCL 	1
-#define GPIO_VOL_A	 	10
-#define GPIO_VOL_B	 	11
+#define GPIO_VOL_DT	 	10
+#define GPIO_VOL_CLK	11
 #define GPIO_VOL_MUTE	16
 #define GPIO_PICO_LED	25
+
+/* Volatile globals */
+volatile uint8_t g_volume = 0;
+volatile uint8_t g_mute = 0;
+
+/* Interrupts */
+//interrupt for volume scroll
+void gpio_vol_scroll(void) {
+	uint8_t clk = gpio_get(GPIO_VOL_CLK);
+	uint8_t dt = 1;
+
+	if (dt && clk) { //if dt and clk are both 1, then ccw
+		g_volume = 1;
+	}
+
+	else {			//if dt and clk are not both 1, then cw
+		g_volume = 2;
+	}
+}
+
+void gpio_vol_push(void_) {
+	g_mute ^= 1;	//toggle g_mute
+}
 
 #if ENABLE_SOUND
 /**
@@ -613,8 +636,8 @@ int main(void)
 	// added
 	gpio_set_function(GPIO_I2C0_SDA, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_I2C0_SCL, GPIO_FUNC_SIO);
-	gpio_set_function(GPIO_VOL_A, GPIO_FUNC_SIO);
-	gpio_set_function(GPIO_VOL_B, GPIO_FUNC_SIO);
+	gpio_set_function(GPIO_VOL_DT, GPIO_FUNC_SIO);
+	gpio_set_function(GPIO_VOL_CLK, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_VOL_MUTE, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_PICO_LED, GPIO_FUNC_SIO);
 
@@ -635,8 +658,8 @@ int main(void)
 	//added
 	gpio_set_dir(GPIO_I2C0_SDA, true); //set I2C0 SDA as output
 	gpio_set_dir(GPIO_I2C0_SCL, true);
-	gpio_set_dir(GPIO_VOL_A, false);   //set rotary encoder "A" as input
-	gpio_set_dir(GPIO_VOL_B, false);
+	gpio_set_dir(GPIO_VOL_DT, false);   //set rotary encoder "A" as input
+	gpio_set_dir(GPIO_VOL_CLK, false);
 	gpio_set_dir(GPIO_VOL_MUTE, false);
 	gpio_set_dir(GPIO_PICO_LED, true);
 	
@@ -659,14 +682,20 @@ int main(void)
 	spi_init(spi0, 30*1000*1000);
 	spi_set_format(spi0, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
-	//added
-	/* Set I2C clock to use 100KHz or so. */
+#if ENABLE_ROTARY_ENCODER
+	/* Set up interrupts for Rotary Encoder. */
+	gpio_set_irq_enabled_with_callback(GPIO_VOL_DT, GPIO_IRQ_EDGE_RISE, true, &gpio_vol_scroll);
+	gpio_set_irq_enabled_with_callback(GPIO_VOL_MUTE, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_vol_push);
+#endif
+
+#if ENABLE_JOYSTICK
+	/* Set I2C clock */
+#endif
 
 //added
 #if ENABLE_PICO_LED
 	//turn on the on-board LED on the PICO
 	gpio_put(GPIO_PICO_LED, true);
-	sleep_ms(5000);
 #endif
 
 #if ENABLE_SOUND
@@ -683,6 +712,7 @@ int main(void)
 	i2s_init(&i2s_config);
 #endif
 
+//-----------------------------------------------------------------------------//
 while(true)
 {
 #if ENABLE_LCD
@@ -774,16 +804,32 @@ while(true)
 
 		/* hotkeys (select + * combo)*/
 		if(!gb.direct.joypad_bits.select) {
+/*
 #if ENABLE_SOUND
 			if(!gb.direct.joypad_bits.up && prev_joypad_bits.up) {
-				/* select + up: increase sound volume */
+				//select + up: increase sound volume
 				i2s_increase_volume(&i2s_config);
 			}
 			if(!gb.direct.joypad_bits.down && prev_joypad_bits.down) {
-				/* select + down: decrease sound volume */
+				//select + down: decrease sound volume
 				i2s_decrease_volume(&i2s_config);
 			}
 #endif
+*/
+
+#if ENABLE_ROTARY_ENCODER
+			if(g_volume == 2) {
+				i2s_increase_volume(&i2s_config);
+			}
+			if(g_volume == 1) {
+				i2s_decrease_volume(&i2s_config);
+			}
+			if(g_mute) {
+				i2s_volume(&i2s_config, 16);
+			}
+			g_volume = 0;
+#endif
+
 			if(!gb.direct.joypad_bits.right && prev_joypad_bits.right) {
 				/* select + right: select the next manual color palette */
 				if(manual_palette_selected<12) {
