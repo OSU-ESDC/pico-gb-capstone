@@ -101,17 +101,17 @@ volatile uint8_t g_mute = 0;
 
 /* Interrupts */
 //interrupt for volume scroll
-void gpio_vol_scroll(void) {
+void gpio_vol_scroll(uint gpio, uint32_t event_mask) {
 	uint8_t clk = gpio_get(GPIO_VOL_CLK);
-	uint8_t dt = 1;
+	uint8_t dt = gpio_get(GPIO_VOL_DT);
 
-	if (dt && clk) { //if dt and clk are both 1, then ccw
-		g_volume = 1;
-	}
-
-	else {			//if dt and clk are not both 1, then cw
+	if (dt == clk) { //cw
 		g_volume = 2;
 	}
+
+	else {	 //ccw
+		g_volume = 1;
+	}	
 }
 
 void gpio_vol_push(void_) {
@@ -684,8 +684,8 @@ int main(void)
 
 #if ENABLE_ROTARY_ENCODER
 	/* Set up interrupts for Rotary Encoder. */
-	gpio_set_irq_enabled_with_callback(GPIO_VOL_DT, GPIO_IRQ_EDGE_RISE, true, &gpio_vol_scroll);
-	gpio_set_irq_enabled_with_callback(GPIO_VOL_MUTE, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_vol_push);
+	gpio_set_irq_enabled_with_callback(GPIO_VOL_DT, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, gpio_vol_scroll);
+	//gpio_set_irq_enabled_with_callback(GPIO_VOL_MUTE, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_vol_push);
 #endif
 
 #if ENABLE_JOYSTICK
@@ -802,8 +802,26 @@ while(true)
 		gb.direct.joypad_bits.select=gpio_get(GPIO_SELECT);
 		gb.direct.joypad_bits.start=gpio_get(GPIO_START);
 
+//added
+#if ENABLE_ROTARY_ENCODER
+		if(g_volume == 2) {
+			i2s_increase_volume(&i2s_config);
+			g_volume = 0;
+		}
+		else if(g_volume == 1) {
+			i2s_decrease_volume(&i2s_config);
+			g_volume = 0;
+		}
+		/*
+		if(g_mute) {
+			i2s_volume(&i2s_config, 16);
+		}
+		*/
+#endif
+
 		/* hotkeys (select + * combo)*/
 		if(!gb.direct.joypad_bits.select) {
+
 /*
 #if ENABLE_SOUND
 			if(!gb.direct.joypad_bits.up && prev_joypad_bits.up) {
@@ -814,22 +832,9 @@ while(true)
 				//select + down: decrease sound volume
 				i2s_decrease_volume(&i2s_config);
 			}
+			gpio_put(GPIO_PICO_LED, 1);
 #endif
 */
-
-#if ENABLE_ROTARY_ENCODER
-			if(g_volume == 2) {
-				i2s_increase_volume(&i2s_config);
-			}
-			if(g_volume == 1) {
-				i2s_decrease_volume(&i2s_config);
-			}
-			if(g_mute) {
-				i2s_volume(&i2s_config, 16);
-			}
-			g_volume = 0;
-#endif
-
 			if(!gb.direct.joypad_bits.right && prev_joypad_bits.right) {
 				/* select + right: select the next manual color palette */
 				if(manual_palette_selected<12) {
