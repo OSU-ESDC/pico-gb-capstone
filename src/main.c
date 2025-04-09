@@ -22,9 +22,9 @@
 #define PEANUT_GB_USE_BIOS 0
 
 // Added settings
-#define ENABLE_JOYSTICk 0
-#define ENABLE_ROTARY_ENCODER 1
-#define ENABLE_PICO_LED 1
+#define ENABLE_JOYSTICK 	1 
+#define ENABLE_ROTARY_ENCODER 	1
+#define ENABLE_PICO_LED 	1
 
 /* Use DMA for all drawing to LCD. Benefits aren't fully realised at the moment
  * due to busy loops waiting for DMA completion. */
@@ -61,6 +61,8 @@
 #include <pico/multicore.h>
 #include <sys/unistd.h>
 #include <hardware/irq.h>
+#include <hardware/i2c.h>
+#include <hardware/dma.h>
 
 /* Project headers */
 #include "hedley.h"
@@ -634,8 +636,8 @@ int main(void)
 	gpio_set_function(GPIO_RST, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_LED, GPIO_FUNC_SIO);
 	// added
-	gpio_set_function(GPIO_I2C0_SDA, GPIO_FUNC_SIO);
-	gpio_set_function(GPIO_I2C0_SCL, GPIO_FUNC_SIO);
+	gpio_set_function(GPIO_I2C0_SDA, GPIO_FUNC_I2C);
+	gpio_set_function(GPIO_I2C0_SCL, GPIO_FUNC_I2C);
 	gpio_set_function(GPIO_VOL_DT, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_VOL_CLK, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_VOL_MUTE, GPIO_FUNC_SIO);
@@ -656,8 +658,8 @@ int main(void)
 	gpio_set_slew_rate(GPIO_CLK, GPIO_SLEW_RATE_FAST);
 	gpio_set_slew_rate(GPIO_SDA, GPIO_SLEW_RATE_FAST);
 	//added
-	gpio_set_dir(GPIO_I2C0_SDA, true); //set I2C0 SDA as output
-	gpio_set_dir(GPIO_I2C0_SCL, true);
+	//gpio_set_dir(GPIO_I2C0_SDA, true); //set I2C0 SDA as output
+	//gpio_set_dir(GPIO_I2C0_SCL, true);
 	gpio_set_dir(GPIO_VOL_DT, false);   //set rotary encoder "A" as input
 	gpio_set_dir(GPIO_VOL_CLK, false);
 	gpio_set_dir(GPIO_VOL_MUTE, false);
@@ -688,13 +690,16 @@ int main(void)
 	//gpio_set_irq_enabled_with_callback(GPIO_VOL_MUTE, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_vol_push);
 #endif
 
+
 #if ENABLE_JOYSTICK
-	/* Set I2C clock */
+	//clock_configure(clk_peri, 0);
+	i2c_init(i2c0, 100 * 1000);
+	//i2c_set_format();
 #endif
 
 //added
 #if ENABLE_PICO_LED
-	//turn on the on-board LED on the PICO
+	//turnS on the on-board LED on the PICO
 	gpio_put(GPIO_PICO_LED, true);
 #endif
 
