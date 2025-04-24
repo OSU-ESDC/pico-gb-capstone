@@ -712,8 +712,14 @@ int main(void)
 
 
 #if ENABLE_JOYSTICK
+<<<<<<< HEAD
 	i2c_init(i2c0, 100 * 1000);
 
+=======
+	//clock_configure(clk_peri, 0);
+	i2c_init(i2c0, 100 * 1000);
+	//i2c_set_format();
+>>>>>>> 8aeafc92f3496eb9653c443839bb76a3b38aac57
 #endif
 
 //added
