@@ -16,6 +16,7 @@ add_subdirectory(ext/FatFs_SPI build)
 add_executable(RP2040_GB
         src/main.c
         src/mk_ili9225.c
+        #src/i2c.c
         ext/minigb_apu/minigb_apu.c
         ext/i2s/i2s.c
 )
@@ -28,8 +29,8 @@ target_link_libraries(RP2040_GB
         FatFs_SPI
         pico_stdlib pico_stdio pico_bootrom pico_multicore pico_stdio  pico_multicore
         hardware_clocks hardware_pio hardware_vreg hardware_pio
-        hardware_sync hardware_pll hardware_spi hardware_irq hardware_dma
-        pico_binary_info)
+        hardware_sync hardware_pll hardware_spi hardware_i2c hardware_dma 
+        hardware_irq pico_binary_info)
 target_compile_definitions(RP2040_GB PRIVATE
         PARAM_ASSERTIONS_DISABLE_ALL=1
         PICO_ENTER_USB_BOOT_ON_EXIT=1
