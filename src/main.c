@@ -841,10 +841,19 @@ while(true)
 		prev_joypad_bits.b=gb.direct.joypad_bits.b;
 		prev_joypad_bits.select=gb.direct.joypad_bits.select;
 		prev_joypad_bits.start=gb.direct.joypad_bits.start;
+
+#if ENABLE_JOYSTICK
+		uint8_t b_up = gpio_get(GPIO_UP);
+		uint8_t b_down = gpio_get(GPIO_DOWN);
+		uint8_t b_left = gpio_get(GPIO_LEFT);
+		uint8_t b_right = gpio_get(GPIO_RIGHT);
+#else 
 		gb.direct.joypad_bits.up=gpio_get(GPIO_UP);
 		gb.direct.joypad_bits.down=gpio_get(GPIO_DOWN);
 		gb.direct.joypad_bits.left=gpio_get(GPIO_LEFT);
 		gb.direct.joypad_bits.right=gpio_get(GPIO_RIGHT);
+#endif
+
 		gb.direct.joypad_bits.a=gpio_get(GPIO_A);
 		gb.direct.joypad_bits.b=gpio_get(GPIO_B);
 		gb.direct.joypad_bits.select=gpio_get(GPIO_SELECT);
@@ -880,22 +889,30 @@ while(true)
 	}
 
 	//logic for button presses
-	if (g_x < g_default_x) {	//left
+	if (g_x < (g_default_x - 50)) {	//left
 		gb.direct.joypad_bits.left = 1;
 		gb.direct.joypad_bits.right = 0;
 	}
-	else if (g_x > g_default_x) { //right
+	else if (g_x > (g_default_x + 50)) { //right
 		gb.direct.joypad_bits.left = 0;
 		gb.direct.joypad_bits.right = 1;
 	}
+	else {
+		gb.direct.joypad_bits.left = b_left;
+		gb.direct.joypad_bits.right = b_right;
+	}
 
-	if (g_y < g_default_y) {	//down
+	if (g_y > (g_default_y + 50)) {	//down
 		gb.direct.joypad_bits.down = 1;
 		gb.direct.joypad_bits.up = 0;
 	}
-	else if (g_y > g_default_y) { //up
+	else if (g_y < (g_default_y - 50)) { //up
 		gb.direct.joypad_bits.down = 0;
 		gb.direct.joypad_bits.up = 1;
+	}
+	else {
+		gb.direct.joypad_bits.down = b_down;
+		gb.direct.joypad_bits.up = b_up;
 	}
 
 #endif
