@@ -97,6 +97,10 @@
 #define GPIO_VOL_MUTE	16
 #define GPIO_PICO_LED	25
 
+#define ADS7830_ADDRESS     0x48    // | 1 for read
+#define ADS7830_CMD_CH0     0x8C    // last nibble = internal ref = on, A/D converter = on
+#define ADS7830_CMD_CH1     0xCC
+
 #if ENABLE_ROTARY_ENCODER
 	/* Volatile globals */
 	volatile uint8_t g_volume = 0;
@@ -104,6 +108,10 @@
 #endif
 
 #if ENABLE_JOYSTICK
+	uint8_t g_default_x;
+	uint8_t g_default_y;
+	uint8_t g_x;
+	uint8_t g_y;
 	/* Registers */
 	//static i2c_hw_t* i2c0_regs = i2c_get_hw(i2c0);
 #endif
@@ -611,12 +619,14 @@ void rom_file_selector() {
 
 #endif
 
+/*
 #if ENABLE_JOYSTICK
 	//functions for I2C and DMA
 	void init_dma(void) {
 	}
 
 #endif
+*/
 
 int main(void)
 {
@@ -710,22 +720,30 @@ int main(void)
 	//gpio_set_irq_enabled_with_callback(GPIO_VOL_MUTE, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_vol_push);
 #endif
 
-
+//added
 #if ENABLE_JOYSTICK
-<<<<<<< HEAD
-	i2c_init(i2c0, 100 * 1000);
+    const uint8_t write_ch0 = ADS7830_CMD_CH0;
+	const uint8_t write_ch1 = ADS7830_CMD_CH1;
 
-=======
-	//clock_configure(clk_peri, 0);
-	i2c_init(i2c0, 100 * 1000);
-	//i2c_set_format();
->>>>>>> 8aeafc92f3496eb9653c443839bb76a3b38aac57
+	i2c_init(i2c0, 400 * 1000);
+
+	uint8_t retval; 
+	retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch0, 1, false);
+	if (retval == 1) {
+		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_default_x, 1, false);
+	}
+
+	retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch1, 1, false);
+	if (retval == 1) {
+		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_default_y, 1, false);
+	}
+
 #endif
 
 //added
 #if ENABLE_PICO_LED
-	//turnS on the on-board LED on the PICO
-	gpio_put(GPIO_PICO_LED, true);
+	//turns on the on-board LED on the PICO
+	//gpio_put(GPIO_PICO_LED, true);
 #endif
 
 #if ENABLE_SOUND
@@ -832,8 +850,6 @@ while(true)
 		gb.direct.joypad_bits.select=gpio_get(GPIO_SELECT);
 		gb.direct.joypad_bits.start=gpio_get(GPIO_START);
 
-
-
 //added
 #if ENABLE_ROTARY_ENCODER
 		if(g_volume == 2) {
@@ -849,6 +865,39 @@ while(true)
 			i2s_volume(&i2s_config, 16);
 		}
 		*/
+#endif
+
+//added
+#if ENABLE_JOYSTICK
+	retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch0, 1, false);
+	if (retval == 1) {
+		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_x, 1, false);
+	}
+
+	retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch1, 1, false);
+	if (retval == 1) {
+		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_y, 1, false);
+	}
+
+	//logic for button presses
+	if (g_x < g_default_x) {	//left
+		gb.direct.joypad_bits.left = 1;
+		gb.direct.joypad_bits.right = 0;
+	}
+	else if (g_x > g_default_x) { //right
+		gb.direct.joypad_bits.left = 0;
+		gb.direct.joypad_bits.right = 1;
+	}
+
+	if (g_y < g_default_y) {	//down
+		gb.direct.joypad_bits.down = 1;
+		gb.direct.joypad_bits.up = 0;
+	}
+	else if (g_y > g_default_y) { //up
+		gb.direct.joypad_bits.down = 0;
+		gb.direct.joypad_bits.up = 1;
+	}
+
 #endif
 
 		/* hotkeys (select + * combo)*/
