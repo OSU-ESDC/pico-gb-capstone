@@ -1,22 +1,3 @@
-# RP2040-GB for Pico-GB
-## NEW:
-This is a fork of the Pico-GB repository (add link). 
-This fork adds PCB files, CAD files, and software changes to the original repository. It is part of a Capstone project. 
-This project is in progress. 
-
-To Do:
-- PCB design
-- CAD design
-- Software design: volume rocker (uses basic GPIO and interrupts) and analog stick (uses external I2C-based ADC and analog joystick)
-- Testing
-
-
-
-
-
-
-
-## OLD: 
 This is a fork of the [RP2040-GB Game Boy (DMG) emulator from deltabeard](https://github.com/deltabeard/RP2040-GB). RP2040-GB is a Game Boy (DMG) emulator Peanut-GB on the Raspberry Pi RP2040 microcontroller, using an ILI9225 screen. Runs at more than 70 fps without audio emulation. With frame skip and interlacing, can run at up to 120 fps.
 
 This fork includes changes done by me for [Pico-GB](https://www.youmaketech.com/pico-gb-gameboy-emulator-handheld-for-raspberry-pi-pico/):
