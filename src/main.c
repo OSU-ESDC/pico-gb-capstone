@@ -88,7 +88,7 @@
 #define GPIO_RST	21
 #define GPIO_LED	22
 
-/* Added GPIO Connections. */
+/* Extended GPIO Connections. */
 #if ENABLE_JOYSTICK
 	#define GPIO_I2C0_SDA 	0
 	#define GPIO_I2C0_SCL 	1
@@ -100,7 +100,7 @@
 	#define GPIO_VOL_MUTE	16
 #endif
 
-/* Added I2C addresses and commands */
+/* I2C addresses and commands for joystick control */
 #if ENABLE_JOYSTICK
 	#define ADS7830_ADDRESS     0x48    // | 1 for read
 	#define ADS7830_CMD_CH0     0x8C    // last nibble = internal ref = on, A/D converter = on
@@ -137,13 +137,13 @@ void gpio_vol_scroll(uint gpio, uint32_t event_mask) {
 	if (dt == clk) { //cw
 		g_volume = VOLUME_INCREASE;
 	}
-
 	else {	 //ccw
 		g_volume = VOLUME_DECREASE;
 	}	
 }
 
-/* Mute functionality is untested
+//interrupt for mute control - untested. 
+/*
 void gpio_vol_push(void_) {
 	g_mute ^= 1;	//toggle g_mute
 }
@@ -690,12 +690,12 @@ int main(void)
 	gpio_pull_up(GPIO_SELECT);
 	gpio_pull_up(GPIO_START);
 
-#if ENABLE_JOYSTICK
-	gpio_set_function(GPIO_I2C0_SDA, GPIO_FUNC_I2C);
-	gpio_set_function(GPIO_I2C0_SCL, GPIO_FUNC_I2C);
-	gpio_pull_up(GPIO_I2C0_SDA);
-	gpio_pull_up(GPIO_I2C0_SCL);
-#endif
+	/* Set SPI clock to use high frequency. */
+	clock_configure(clk_peri, 0,
+		CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS,
+		125 * 1000 * 1000, 125 * 1000 * 1000);
+	spi_init(spi0, 30*1000*1000);
+	spi_set_format(spi0, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
 #if ENABLE_ROTARY_ENCODER
 	gpio_set_function(GPIO_VOL_DT, GPIO_FUNC_SIO);
@@ -704,23 +704,18 @@ int main(void)
 	gpio_set_dir(GPIO_VOL_DT, false);  
 	gpio_set_dir(GPIO_VOL_CLK, false);
 	gpio_set_dir(GPIO_VOL_MUTE, false);
-#endif
 
-	/* Set SPI clock to use high frequency. */
-	clock_configure(clk_peri, 0,
-			CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS,
-			125 * 1000 * 1000, 125 * 1000 * 1000);
-	spi_init(spi0, 30*1000*1000);
-	spi_set_format(spi0, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
-
-#if ENABLE_ROTARY_ENCODER
 	/* Set up interrupts for Rotary Encoder. */
 	gpio_set_irq_enabled_with_callback(GPIO_VOL_DT, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, gpio_vol_scroll);
 #endif
 
-//added
 #if ENABLE_JOYSTICK
-/* Get the default x and y coordinates of the joystick*/
+	gpio_set_function(GPIO_I2C0_SDA, GPIO_FUNC_I2C);
+	gpio_set_function(GPIO_I2C0_SCL, GPIO_FUNC_I2C);
+	gpio_pull_up(GPIO_I2C0_SDA);
+	gpio_pull_up(GPIO_I2C0_SCL);
+
+	/* Get the default x and y coordinates of the joystick*/
     const uint8_t write_ch0 = ADS7830_CMD_CH0;
 	const uint8_t write_ch1 = ADS7830_CMD_CH1;
 
@@ -833,15 +828,7 @@ while(true)
 		prev_joypad_bits.b=gb.direct.joypad_bits.b;
 		prev_joypad_bits.select=gb.direct.joypad_bits.select;
 		prev_joypad_bits.start=gb.direct.joypad_bits.start;
-
-//added
-// Get button inputs
-#if ENABLE_JOYSTICK
-		uint8_t b_up = gpio_get(GPIO_UP);
-		uint8_t b_down = gpio_get(GPIO_DOWN);
-		uint8_t b_left = gpio_get(GPIO_LEFT);
-		uint8_t b_right = gpio_get(GPIO_RIGHT);
-#else 
+#if (ENABLE_JOYSTICK == 0)
 		gb.direct.joypad_bits.up=gpio_get(GPIO_UP);
 		gb.direct.joypad_bits.down=gpio_get(GPIO_DOWN);
 		gb.direct.joypad_bits.left=gpio_get(GPIO_LEFT);
@@ -852,8 +839,12 @@ while(true)
 		gb.direct.joypad_bits.select=gpio_get(GPIO_SELECT);
 		gb.direct.joypad_bits.start=gpio_get(GPIO_START);
 
-//added
 #if ENABLE_JOYSTICK
+		uint8_t b_up = gpio_get(GPIO_UP);
+		uint8_t b_down = gpio_get(GPIO_DOWN);
+		uint8_t b_left = gpio_get(GPIO_LEFT);
+		uint8_t b_right = gpio_get(GPIO_RIGHT);
+
 		retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch0, 1, false);
 		if (retval == 1) {
 			retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_y, 1, false);
@@ -892,7 +883,6 @@ while(true)
 		}
 #endif
 
-//added
 /* Change the volume depending on the rotary encoder */
 #if ENABLE_ROTARY_ENCODER
 		if(g_volume == VOLUME_INCREASE) {
@@ -907,7 +897,7 @@ while(true)
 		/* hotkeys (select + * combo)*/
 		if(!gb.direct.joypad_bits.select) {
 
-#if (ENABLE_SOUND) && (ENABLE_ROTARY_ENCODER==0)
+#if ENABLE_SOUND
 			if(!gb.direct.joypad_bits.up && prev_joypad_bits.up) {
 				//select + up: increase sound volume
 				i2s_increase_volume(&i2s_config);
