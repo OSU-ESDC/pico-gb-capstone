@@ -24,7 +24,6 @@
 // Added settings
 #define ENABLE_JOYSTICK 	1
 #define ENABLE_ROTARY_ENCODER 	1
-#define ENABLE_PICO_LED 	1
 
 /* Use DMA for all drawing to LCD. Benefits aren't fully realised at the moment
  * due to busy loops waiting for DMA completion. */
@@ -95,11 +94,13 @@
 #define GPIO_VOL_DT	 	10
 #define GPIO_VOL_CLK	11
 #define GPIO_VOL_MUTE	16
-#define GPIO_PICO_LED	25
 
-#define ADS7830_ADDRESS     0x48    // | 1 for read
-#define ADS7830_CMD_CH0     0x8C    // last nibble = internal ref = on, A/D converter = on
-#define ADS7830_CMD_CH1     0xCC
+/* Added I2C addresses and commands */
+#if ENABLE_JOYSTICK
+	#define ADS7830_ADDRESS     0x48    // | 1 for read
+	#define ADS7830_CMD_CH0     0x8C    // last nibble = internal ref = on, A/D converter = on
+	#define ADS7830_CMD_CH1     0xCC
+#endif
 
 #if ENABLE_ROTARY_ENCODER
 	/* Volatile globals */
@@ -111,7 +112,6 @@
 		VOLUME_DECREASE,
 		VOLUME_STABLE
 	}volume_state_t;
-
 #endif
 
 #if ENABLE_JOYSTICK
@@ -130,11 +130,11 @@ void gpio_vol_scroll(uint gpio, uint32_t event_mask) {
 	uint8_t dt = gpio_get(GPIO_VOL_DT);
 
 	if (dt == clk) { //cw
-		g_volume = 2;
+		g_volume = VOLUME_INCREASE;
 	}
 
 	else {	 //ccw
-		g_volume = 1;
+		g_volume = VOLUME_DECREASE;
 	}	
 }
 
@@ -660,14 +660,7 @@ int main(void)
 	gpio_set_function(GPIO_RS, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_RST, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_LED, GPIO_FUNC_SIO);
-	// added
-	gpio_set_function(GPIO_I2C0_SDA, GPIO_FUNC_I2C);
-	gpio_set_function(GPIO_I2C0_SCL, GPIO_FUNC_I2C);
-	gpio_set_function(GPIO_VOL_DT, GPIO_FUNC_SIO);
-	gpio_set_function(GPIO_VOL_CLK, GPIO_FUNC_SIO);
-	gpio_set_function(GPIO_VOL_MUTE, GPIO_FUNC_SIO);
-	gpio_set_function(GPIO_PICO_LED, GPIO_FUNC_SIO);
-
+	
 	gpio_set_dir(GPIO_UP, false);
 	gpio_set_dir(GPIO_DOWN, false);
 	gpio_set_dir(GPIO_LEFT, false);
@@ -683,12 +676,6 @@ int main(void)
 	gpio_set_slew_rate(GPIO_CLK, GPIO_SLEW_RATE_FAST);
 	gpio_set_slew_rate(GPIO_SDA, GPIO_SLEW_RATE_FAST);
 
-	//added
-	gpio_set_dir(GPIO_VOL_DT, false);   //set rotary encoder "A" as input
-	gpio_set_dir(GPIO_VOL_CLK, false);
-	gpio_set_dir(GPIO_VOL_MUTE, false);
-	gpio_set_dir(GPIO_PICO_LED, true);
-	
 	gpio_pull_up(GPIO_UP);
 	gpio_pull_up(GPIO_DOWN);
 	gpio_pull_up(GPIO_LEFT);
@@ -698,6 +685,18 @@ int main(void)
 	gpio_pull_up(GPIO_SELECT);
 	gpio_pull_up(GPIO_START);
 
+	// added
+	gpio_set_function(GPIO_I2C0_SDA, GPIO_FUNC_I2C);
+	gpio_set_function(GPIO_I2C0_SCL, GPIO_FUNC_I2C);
+	gpio_set_function(GPIO_VOL_DT, GPIO_FUNC_SIO);
+	gpio_set_function(GPIO_VOL_CLK, GPIO_FUNC_SIO);
+	gpio_set_function(GPIO_VOL_MUTE, GPIO_FUNC_SIO);
+
+	//added
+	gpio_set_dir(GPIO_VOL_DT, false);  
+	gpio_set_dir(GPIO_VOL_CLK, false);
+	gpio_set_dir(GPIO_VOL_MUTE, false);
+	
 	//added
 	gpio_pull_up(GPIO_I2C0_SDA);
 	gpio_pull_up(GPIO_I2C0_SCL);
@@ -732,12 +731,6 @@ int main(void)
 	if (retval == 1) {
 		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_default_x, 1, false);
 	}
-#endif
-
-//added
-#if ENABLE_PICO_LED
-	//turns on the on-board LED on the PICO
-	gpio_put(GPIO_PICO_LED, true);
 #endif
 
 #if ENABLE_SOUND
@@ -849,22 +842,33 @@ while(true)
 		gb.direct.joypad_bits.left=gpio_get(GPIO_LEFT);
 		gb.direct.joypad_bits.right=gpio_get(GPIO_RIGHT);
 #endif
-
 		gb.direct.joypad_bits.a=gpio_get(GPIO_A);
 		gb.direct.joypad_bits.b=gpio_get(GPIO_B);
 		gb.direct.joypad_bits.select=gpio_get(GPIO_SELECT);
 		gb.direct.joypad_bits.start=gpio_get(GPIO_START);
 
 //added
+/* Change the volume depending on the rotary encoder */
 #if ENABLE_ROTARY_ENCODER
-		if(g_volume == 2) {
+		if(g_volume == VOLUME_INCREASE) {
 			i2s_increase_volume(&i2s_config);
-			g_volume = 0;
+			g_volume = VOLUME_STABLE;
 		}
-		else if(g_volume == 1) {
+		else if(g_volume == VOLUME_DECREASE) {
 			i2s_decrease_volume(&i2s_config);
-			g_volume = 0;
+			g_volume = VOLUME_STABLE;
 		}
+#else 
+#if ENABLE_SOUND
+			if(!gb.direct.joypad_bits.up && prev_joypad_bits.up) {
+				//select + up: increase sound volume
+				i2s_increase_volume(&i2s_config);
+			}
+			if(!gb.direct.joypad_bits.down && prev_joypad_bits.down) {
+				//select + down: decrease sound volume
+				i2s_decrease_volume(&i2s_config);
+			}
+#endif
 #endif
 
 //added
@@ -905,25 +909,11 @@ while(true)
 		gb.direct.joypad_bits.down = b_down;
 		gb.direct.joypad_bits.up = b_up;
 	}
-
 #endif
 
 		/* hotkeys (select + * combo)*/
 		if(!gb.direct.joypad_bits.select) {
 
-/*
-#if ENABLE_SOUND
-			if(!gb.direct.joypad_bits.up && prev_joypad_bits.up) {
-				//select + up: increase sound volume
-				i2s_increase_volume(&i2s_config);
-			}
-			if(!gb.direct.joypad_bits.down && prev_joypad_bits.down) {
-				//select + down: decrease sound volume
-				i2s_decrease_volume(&i2s_config);
-			}
-			gpio_put(GPIO_PICO_LED, 1);
-#endif
-*/
 			if(!gb.direct.joypad_bits.right && prev_joypad_bits.right) {
 				/* select + right: select the next manual color palette */
 				if(manual_palette_selected<12) {
