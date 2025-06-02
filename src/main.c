@@ -22,8 +22,8 @@
 #define PEANUT_GB_USE_BIOS 0
 
 // Added settings
-#define ENABLE_JOYSTICK 	1
-#define ENABLE_ROTARY_ENCODER 	1
+#define ENABLE_JOYSTICK 	0
+#define ENABLE_ROTARY_ENCODER 	0
 
 /* Use DMA for all drawing to LCD. Benefits aren't fully realised at the moment
  * due to busy loops waiting for DMA completion. */
@@ -89,11 +89,16 @@
 #define GPIO_LED	22
 
 /* Added GPIO Connections. */
-#define GPIO_I2C0_SDA 	0
-#define GPIO_I2C0_SCL 	1
-#define GPIO_VOL_DT	 	10
-#define GPIO_VOL_CLK	11
-#define GPIO_VOL_MUTE	16
+#if ENABLE_JOYSTICK
+	#define GPIO_I2C0_SDA 	0
+	#define GPIO_I2C0_SCL 	1
+#endif
+
+#if ENABLE_ROTARY_ENCODER
+	#define GPIO_VOL_DT	 	10
+	#define GPIO_VOL_CLK	11
+	#define GPIO_VOL_MUTE	16
+#endif
 
 /* Added I2C addresses and commands */
 #if ENABLE_JOYSTICK
@@ -685,21 +690,21 @@ int main(void)
 	gpio_pull_up(GPIO_SELECT);
 	gpio_pull_up(GPIO_START);
 
-	// added
+#if ENABLE_JOYSTICK
 	gpio_set_function(GPIO_I2C0_SDA, GPIO_FUNC_I2C);
 	gpio_set_function(GPIO_I2C0_SCL, GPIO_FUNC_I2C);
+	gpio_pull_up(GPIO_I2C0_SDA);
+	gpio_pull_up(GPIO_I2C0_SCL);
+#endif
+
+#if ENABLE_ROTARY_ENCODER
 	gpio_set_function(GPIO_VOL_DT, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_VOL_CLK, GPIO_FUNC_SIO);
 	gpio_set_function(GPIO_VOL_MUTE, GPIO_FUNC_SIO);
-
-	//added
 	gpio_set_dir(GPIO_VOL_DT, false);  
 	gpio_set_dir(GPIO_VOL_CLK, false);
 	gpio_set_dir(GPIO_VOL_MUTE, false);
-	
-	//added
-	gpio_pull_up(GPIO_I2C0_SDA);
-	gpio_pull_up(GPIO_I2C0_SCL);
+#endif
 
 	/* Set SPI clock to use high frequency. */
 	clock_configure(clk_peri, 0,
@@ -848,6 +853,46 @@ while(true)
 		gb.direct.joypad_bits.start=gpio_get(GPIO_START);
 
 //added
+#if ENABLE_JOYSTICK
+		retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch0, 1, false);
+		if (retval == 1) {
+			retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_y, 1, false);
+		}
+
+		retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch1, 1, false);
+		if (retval == 1) {
+			retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_x, 1, false);
+		}
+
+		//logic for button presses
+		if (g_x < (g_default_x - 50)) {	//left
+			gb.direct.joypad_bits.left = 1;
+			gb.direct.joypad_bits.right = 0;
+		}
+		else if (g_x > (g_default_x + 50)) { //right
+			gb.direct.joypad_bits.left = 0;
+			gb.direct.joypad_bits.right = 1;
+		}
+		else {
+			gb.direct.joypad_bits.left = b_left;
+			gb.direct.joypad_bits.right = b_right;
+		}
+
+		if (g_y > (g_default_y + 50)) {	//down
+			gb.direct.joypad_bits.down = 0;
+			gb.direct.joypad_bits.up = 1;
+		}
+		else if (g_y < (g_default_y - 50)) { //up
+			gb.direct.joypad_bits.down = 1;
+			gb.direct.joypad_bits.up = 0;
+		}
+		else {
+			gb.direct.joypad_bits.down = b_down;
+			gb.direct.joypad_bits.up = b_up;
+		}
+#endif
+
+//added
 /* Change the volume depending on the rotary encoder */
 #if ENABLE_ROTARY_ENCODER
 		if(g_volume == VOLUME_INCREASE) {
@@ -858,8 +903,11 @@ while(true)
 			i2s_decrease_volume(&i2s_config);
 			g_volume = VOLUME_STABLE;
 		}
-#else 
-#if ENABLE_SOUND
+#endif
+		/* hotkeys (select + * combo)*/
+		if(!gb.direct.joypad_bits.select) {
+
+#if (ENABLE_SOUND) && (ENABLE_ROTARY_ENCODER==0)
 			if(!gb.direct.joypad_bits.up && prev_joypad_bits.up) {
 				//select + up: increase sound volume
 				i2s_increase_volume(&i2s_config);
@@ -869,51 +917,6 @@ while(true)
 				i2s_decrease_volume(&i2s_config);
 			}
 #endif
-#endif
-
-//added
-#if ENABLE_JOYSTICK
-	retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch0, 1, false);
-	if (retval == 1) {
-		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_y, 1, false);
-	}
-
-	retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch1, 1, false);
-	if (retval == 1) {
-		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_x, 1, false);
-	}
-
-	//logic for button presses
-	if (g_x < (g_default_x - 50)) {	//left
-		gb.direct.joypad_bits.left = 1;
-		gb.direct.joypad_bits.right = 0;
-	}
-	else if (g_x > (g_default_x + 50)) { //right
-		gb.direct.joypad_bits.left = 0;
-		gb.direct.joypad_bits.right = 1;
-	}
-	else {
-		gb.direct.joypad_bits.left = b_left;
-		gb.direct.joypad_bits.right = b_right;
-	}
-
-	if (g_y > (g_default_y + 50)) {	//down
-		gb.direct.joypad_bits.down = 0;
-		gb.direct.joypad_bits.up = 1;
-	}
-	else if (g_y < (g_default_y - 50)) { //up
-		gb.direct.joypad_bits.down = 1;
-		gb.direct.joypad_bits.up = 0;
-	}
-	else {
-		gb.direct.joypad_bits.down = b_down;
-		gb.direct.joypad_bits.up = b_up;
-	}
-#endif
-
-		/* hotkeys (select + * combo)*/
-		if(!gb.direct.joypad_bits.select) {
-
 			if(!gb.direct.joypad_bits.right && prev_joypad_bits.right) {
 				/* select + right: select the next manual color palette */
 				if(manual_palette_selected<12) {
@@ -926,7 +929,8 @@ while(true)
 				if(manual_palette_selected>0) {
 					manual_palette_selected--;
 					manual_assign_palette(palette,manual_palette_selected);
-				}
+				}					manual_assign_palette(palette,manual_palette_selected);
+
 			}
 			if(!gb.direct.joypad_bits.start && prev_joypad_bits.start) {
 				/* select + start: save ram and resets to the game selection menu */
