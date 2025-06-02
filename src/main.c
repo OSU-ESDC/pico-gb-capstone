@@ -22,7 +22,7 @@
 #define PEANUT_GB_USE_BIOS 0
 
 // Added settings
-#define ENABLE_JOYSTICK 	1 
+#define ENABLE_JOYSTICK 	1
 #define ENABLE_ROTARY_ENCODER 	1
 #define ENABLE_PICO_LED 	1
 
@@ -105,20 +105,26 @@
 	/* Volatile globals */
 	volatile uint8_t g_volume = 0;
 	volatile uint8_t g_mute = 0;
+
+	typedef enum{
+		VOLUME_INCREASE,
+		VOLUME_DECREASE,
+		VOLUME_STABLE
+	}volume_state_t;
+
 #endif
 
 #if ENABLE_JOYSTICK
+	/* joystick position globals */
 	uint8_t g_default_x;
 	uint8_t g_default_y;
 	uint8_t g_x;
 	uint8_t g_y;
-	/* Registers */
-	//static i2c_hw_t* i2c0_regs = i2c_get_hw(i2c0);
 #endif
 
 #if ENABLE_ROTARY_ENCODER
 /* Interrupts */
-//interrupt for volume scroll
+//interrupt for volume control
 void gpio_vol_scroll(uint gpio, uint32_t event_mask) {
 	uint8_t clk = gpio_get(GPIO_VOL_CLK);
 	uint8_t dt = gpio_get(GPIO_VOL_DT);
@@ -132,13 +138,11 @@ void gpio_vol_scroll(uint gpio, uint32_t event_mask) {
 	}	
 }
 
+/* Mute functionality is untested
 void gpio_vol_push(void_) {
 	g_mute ^= 1;	//toggle g_mute
 }
-#endif
-
-#if ENABLE_JOYSTICK
-/* Interrupts (DMA)*/
+*/
 #endif
 
 #if ENABLE_SOUND
@@ -619,15 +623,6 @@ void rom_file_selector() {
 
 #endif
 
-/*
-#if ENABLE_JOYSTICK
-	//functions for I2C and DMA
-	void init_dma(void) {
-	}
-
-#endif
-*/
-
 int main(void)
 {
 	static struct gb_s gb;
@@ -687,9 +682,8 @@ int main(void)
 	gpio_set_dir(GPIO_LED, true);
 	gpio_set_slew_rate(GPIO_CLK, GPIO_SLEW_RATE_FAST);
 	gpio_set_slew_rate(GPIO_SDA, GPIO_SLEW_RATE_FAST);
+
 	//added
-	//gpio_set_dir(GPIO_I2C0_SDA, true); //set I2C0 SDA as output
-	//gpio_set_dir(GPIO_I2C0_SCL, true);
 	gpio_set_dir(GPIO_VOL_DT, false);   //set rotary encoder "A" as input
 	gpio_set_dir(GPIO_VOL_CLK, false);
 	gpio_set_dir(GPIO_VOL_MUTE, false);
@@ -703,6 +697,7 @@ int main(void)
 	gpio_pull_up(GPIO_B);
 	gpio_pull_up(GPIO_SELECT);
 	gpio_pull_up(GPIO_START);
+
 	//added
 	gpio_pull_up(GPIO_I2C0_SDA);
 	gpio_pull_up(GPIO_I2C0_SCL);
@@ -717,11 +712,11 @@ int main(void)
 #if ENABLE_ROTARY_ENCODER
 	/* Set up interrupts for Rotary Encoder. */
 	gpio_set_irq_enabled_with_callback(GPIO_VOL_DT, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, gpio_vol_scroll);
-	//gpio_set_irq_enabled_with_callback(GPIO_VOL_MUTE, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_vol_push);
 #endif
 
 //added
 #if ENABLE_JOYSTICK
+/* Get the default x and y coordinates of the joystick*/
     const uint8_t write_ch0 = ADS7830_CMD_CH0;
 	const uint8_t write_ch1 = ADS7830_CMD_CH1;
 
@@ -730,20 +725,19 @@ int main(void)
 	uint8_t retval; 
 	retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch0, 1, false);
 	if (retval == 1) {
-		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_default_x, 1, false);
+		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_default_y, 1, false);
 	}
 
 	retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch1, 1, false);
 	if (retval == 1) {
-		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_default_y, 1, false);
+		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_default_x, 1, false);
 	}
-
 #endif
 
 //added
 #if ENABLE_PICO_LED
 	//turns on the on-board LED on the PICO
-	//gpio_put(GPIO_PICO_LED, true);
+	gpio_put(GPIO_PICO_LED, true);
 #endif
 
 #if ENABLE_SOUND
@@ -842,6 +836,8 @@ while(true)
 		prev_joypad_bits.select=gb.direct.joypad_bits.select;
 		prev_joypad_bits.start=gb.direct.joypad_bits.start;
 
+//added
+// Get button inputs
 #if ENABLE_JOYSTICK
 		uint8_t b_up = gpio_get(GPIO_UP);
 		uint8_t b_down = gpio_get(GPIO_DOWN);
@@ -869,23 +865,18 @@ while(true)
 			i2s_decrease_volume(&i2s_config);
 			g_volume = 0;
 		}
-		/*
-		if(g_mute) {
-			i2s_volume(&i2s_config, 16);
-		}
-		*/
 #endif
 
 //added
 #if ENABLE_JOYSTICK
 	retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch0, 1, false);
 	if (retval == 1) {
-		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_x, 1, false);
+		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_y, 1, false);
 	}
 
 	retval = i2c_write_blocking(i2c0, ADS7830_ADDRESS, &write_ch1, 1, false);
 	if (retval == 1) {
-		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_y, 1, false);
+		retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_x, 1, false);
 	}
 
 	//logic for button presses
@@ -903,12 +894,12 @@ while(true)
 	}
 
 	if (g_y > (g_default_y + 50)) {	//down
-		gb.direct.joypad_bits.down = 1;
-		gb.direct.joypad_bits.up = 0;
-	}
-	else if (g_y < (g_default_y - 50)) { //up
 		gb.direct.joypad_bits.down = 0;
 		gb.direct.joypad_bits.up = 1;
+	}
+	else if (g_y < (g_default_y - 50)) { //up
+		gb.direct.joypad_bits.down = 1;
+		gb.direct.joypad_bits.up = 0;
 	}
 	else {
 		gb.direct.joypad_bits.down = b_down;
