@@ -33,6 +33,8 @@ DISCLAIMER: Some links are affiliate links. As an Amazon Associate I receive a s
 [Pico-GB assembly instructions, circuit diagrams, 3d printed files etc.](https://www.youmaketech.com/pico-gb-gameboy-emulator-handheld-for-raspberry-pi-pico/)
 
 # Pinout
+* I2C SDA = GP0
+* I2C SCL = GP1
 * UP = GP2
 * DOWN = GP3
 * LEFT = GP4
@@ -41,10 +43,13 @@ DISCLAIMER: Some links are affiliate links. As an Amazon Associate I receive a s
 * BUTTON B = GP7
 * SELECT = GP8
 * START = GP9
+* VOLUME DT = GP10
+* VOLUME CLK = GP11
 * SD MISO = GP12
 * SD CS = GP13
 * SD CSK = GP14
 * SD MOSI = GP15
+* VOLUME MUTE = GP16
 * LCD CS = GP17
 * LCD CLK = GP18
 * LCD SDI = GP19
