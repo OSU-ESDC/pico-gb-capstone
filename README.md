@@ -68,7 +68,50 @@ The SD card is used to store game roms and save game progress. For this project,
 * Insert the SD card into the ILI9225 SD card slot using a Micro SD adapter
 
 # Building from source
-The [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk) is required to build this project. Make sure you are able to compile an [example project](https://github.com/raspberrypi/pico-examples#first--examples) before continuing.
+The [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk) is required to build this project. 
+To start, clone the SDK in a known folder (labeled as sdk-path in future commands), update CMake and submodules, and export the pico sdk path:
+```
+git clone git@github.com:raspberrypi/pico-sdk.git
+git submodule update --init
+sudo apt install cmake python3 build-essential gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib 
+export PICO_SDK_PATH=<sdk-path>
+```
+Clone this repository and create a build folder:
+```
+git clone git@github.com:osu-esdc/pico-gb-capstone.git
+cd pico-gb-capstone
+mkdir build
+cd build
+```
+
+Build a Makefile for the project (no debugging):
+```
+cmake ..
+```
+
+Build a Makefile for the project (with debugging):
+```
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+```
+
+Create the executable and program the Pico:
+```
+make
+sudo openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c "adapter speed 5000" -c "program RP2040_GB.elf verify reset exit"
+```
+
+For debugging using a Pico Tool (using gdb server and client):
+Run the following in one window:
+```
+sudo openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c "adapter speed 5000"
+```
+Then run this in the other window:
+```
+arm-none-eabi-gdb
+(gdb) start_pico
+```
+For tips on setting up debugging tools, follow the (arm GNU Toolchain setup guide)[https://github.com/osu-esdc/Arm-GNU-Toolchain-Setup]
+
 
 # Known issues and limitations
 * No copyrighted games are included with Pico-GB / RP2040-GB. For this project, you will need a FAT 32 formatted Micro SD card with roms you legally own. Roms must have the .gb extension.
