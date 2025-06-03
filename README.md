@@ -89,18 +89,17 @@ Build a Makefile for the project (no debugging):
 cmake ..
 ```
 
-Build a Makefile for the project (with debugging):
-```
-cmake .. -DCMAKE_BUILD_TYPE=Debug
-```
-
 Create the executable and program the Pico:
 ```
 make
 sudo openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c "adapter speed 5000" -c "program RP2040_GB.elf verify reset exit"
 ```
 
-For debugging using a Pico Tool (using gdb server and client):
+#### For debugging using a Pico Tool (using gdb server and client):
+Build a Makefile for the project (with debugging):
+```
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+```
 Run the following in one window:
 ```
 sudo openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c "adapter speed 5000"
@@ -110,7 +109,7 @@ Then run this in the other window:
 arm-none-eabi-gdb
 (gdb) start_pico
 ```
-For tips on setting up debugging tools, follow the (arm GNU Toolchain setup guide)[https://github.com/osu-esdc/Arm-GNU-Toolchain-Setup]
+For tips on setting up debugging tools, follow the [arm GNU Toolchain setup guide](https://github.com/osu-esdc/Arm-GNU-Toolchain-Setup)
 
 
 # Known issues and limitations
