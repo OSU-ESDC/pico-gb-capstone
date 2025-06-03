@@ -1,23 +1,23 @@
-# RP2040-GB for Pico-GB
+# Gaming System - A Modified RP2040 GB for the ENGR 512 Capstone group at Oregon State University
 
-This is a fork of the [RP2040-GB Game Boy (DMG) emulator from deltabeard](https://github.com/deltabeard/RP2040-GB). RP2040-GB is a Game Boy (DMG) emulator Peanut-GB on the Raspberry Pi RP2040 microcontroller, using an ILI9225 screen. Runs at more than 70 fps without audio emulation. With frame skip and interlacing, can run at up to 120 fps.
+This is a fork of the [RP2040-GB Game Boy (DMG) emulator by YouMakeTech, originally forked from Deltabeard's version](https://github.com/YouMakeTech/Pico-GB). RP2040-GB is a Game Boy (DMG) emulator Peanut-GB on the Raspberry Pi RP2040 microcontroller, using an ILI9225 screen. Runs at more than 70 fps without audio emulation. With frame skip and interlacing, can run at up to 120 fps.
 
-This fork includes changes done by me for [Pico-GB](https://www.youmaketech.com/pico-gb-gameboy-emulator-handheld-for-raspberry-pi-pico/):
-* push buttons support
-* overclocking to 266MHz for more accurate framerate (~60 FPS)
-* I2S sound support (44.1kHz 16 bits stereo audio)
-* SD card support (store roms and save games) + game selection menu
-* automatic color palette selection for some games (emulation of Game Boy Color Bootstrap ROM) + manual color palette selection
+This fork includes changes done by me for my Capstone project in Winter/Spring 2025:
+* Volume control via rotary encoder support
+* Game movement via analog joystick support
+* I2C communication with ADC support, enabling the analog joystick to be used
 
-Pico-GB is a [3d-printed Game Boy emulator handheld gaming console for Raspberry Pi Pico](https://www.youmaketech.com/pico-gb-gameboy-emulator-handheld-for-raspberry-pi-pico/) that ressembles to the original Nintendo Game Boy released in 1989.
+The Gaming System has a 3D printed shell, designed by Justin Gonzalez. You can find the stl files for the print in the print folder. 
 
 # Videos
-* [Let's build a Game Boy Emulator on a Breadboard!](https://youtu.be/ThmwXpIsGWs)
-* [Build the ULTIMATE GameBoy Emulator for Raspberry Pi Pico](https://youtu.be/yauNQSS6nC4)
+* [test](https://youtube.com)
 
 # Hardware
 ## What you need
 * (1x) [Raspberry Pi Pico](https://amzn.to/3rAcmDy)
+* (1x) [ADS7830 8-bit, 8-channel, I2C ADC](https://www.adafruit.com/product/5836)
+* (1x) [Rotary Encoder](https://eecs.engineering.oregonstate.edu/education/tekbotSuite/tekbot/pages/publicInventoryPart.php?stocknumber=KIJRQN)
+* (1x) [Analog Joystick](https://eecs.engineering.oregonstate.edu/education/tekbotSuite/tekbot/pages/publicInventoryPart.php?stocknumber=S5GS9V)
 * (1x) [2.2inch ILI9225 176×220 LCD Display Module](https://amzn.to/3aNAMD7)
 * (1x) [FAT 32 formatted Micro SD card + adapter](https://amzn.to/3ICKzcm) with roms you legally own. Roms must have the .gb extension and must be copied to the root folder.
 * (1x) [MAX98357A amplifier](https://www.youmaketech.com/max98357)
@@ -27,10 +27,12 @@ Pico-GB is a [3d-printed Game Boy emulator handheld gaming console for Raspberry
 * [Dupont Wires Assorted Kit (Male to Female + Male to Male + Female to Female)](https://amzn.to/3HtbvdO)
 * [Preformed Breadboard Jumper Wires](https://amzn.to/3rxwVjM)
 
-DISCLAIMER: Some links are affiliate links. As an Amazon Associate I receive a small commission (at no extra cost to you) if you make a purchase after clicking one of the affiliate links. Thanks for your support!
-
 ## Setting up the hardware
+#### Most of the setup is here, minus the analog joystick/rotary encoder:
 [Pico-GB assembly instructions, circuit diagrams, 3d printed files etc.](https://www.youmaketech.com/pico-gb-gameboy-emulator-handheld-for-raspberry-pi-pico/)
+
+#### The rest is here:
+NOT HERE RIGHT NOW JUST YET
 
 # Pinout
 * I2C SDA = GP0
@@ -61,7 +63,7 @@ DISCLAIMER: Some links are affiliate links. As an Amazon Associate I receive a s
 * MAX98357A LRC = GP28
 
 # Flashing the firmware
-* Download RP2040_GB.uf2 from the [releases page](https://github.com/YouMakeTech/Pico-GB/releases)
+* Download RP2040_GB.uf2 from the [releases page](https://github.com/osu-esdc/pico-gb-capstone/releases)
 * Push and hold the BOOTSEL button on the Pico, then connect to your computer using a micro USB cable. Release BOOTSEL once the drive RPI-RP2 appears on your computer.
 * Drag and drop the UF2 file on to the RPI-RP2 drive. The Raspberry Pi Pico will reboot and will now run the emulator.
 
