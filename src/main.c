@@ -855,7 +855,7 @@ while(true)
 			retval = i2c_read_blocking(i2c0, ADS7830_ADDRESS, &g_x, 1, false);
 		}
 
-		//logic for button presses
+		//logic for joystick movement
 		if (g_x < (g_default_x - 50)) {	//left
 			gb.direct.joypad_bits.left = 1;
 			gb.direct.joypad_bits.right = 0;
