@@ -76,12 +76,14 @@ The SD card is used to store game roms and save game progress. For this project,
 
 # Building from source
 The [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk) is required to build this project. 
-To start, clone the SDK in a known folder (labeled as sdk-path in future commands), update CMake and submodules, and export the pico sdk path:
+To start, clone the SDK in a known folder (labeled as path-to-sdk in future commands), update CMake and submodules, and export the pico sdk path:
 ```
 git clone git@github.com:raspberrypi/pico-sdk.git
+cd pico-sdk
 git submodule update --init
 sudo apt install cmake python3 build-essential gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib 
-export PICO_SDK_PATH=<sdk-path>
+export PICO_SDK_PATH=<path-to-sdk>/pico-sdk
+cd ..
 ```
 Clone this repository and create a build folder:
 ```
