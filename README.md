@@ -32,9 +32,7 @@ The Gaming System has a 3D printed shell, designed by Justin Gonzalez. You can f
 ## Setting up the hardware
 #### Most of the setup is here, minus the analog joystick/rotary encoder:
 [Pico-GB assembly instructions, circuit diagrams, 3d printed files etc.](https://www.youmaketech.com/pico-gb-gameboy-emulator-handheld-for-raspberry-pi-pico/)
-
-#### The rest is here:
-NOT HERE RIGHT NOW JUST YET
+You can find the rest of the setup in the documentation in the /docs folder.  
 
 # Pinout
 * I2C SDA = GP0
