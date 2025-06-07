@@ -1,3 +1,5 @@
-### There are two folders for the CAD files - one for STEP files, and one for STL files. The STLs are for just printing and the STEP files are for editing. 
+### There are two folders for the CAD files - one for STEP files, and one for STL files. 
+- Use the STL files to print the controller shell.
+- Use the STEP files to open the controller shell design and make edits to it. 
 
 
