@@ -10,7 +10,9 @@ This fork includes changes done by me for my Capstone project in Winter/Spring 2
 The Gaming System has a 3D printed shell, designed by Justin Gonzalez. You can find the stl files for the print in the print folder. 
 
 # Videos
-* [test](https://youtube.com)
+* [Analog Joystick Functionality](https://www.youtube.com/shorts/wKSmv8ernYQ)
+* [Case Dissasembly](https://www.youtube.com/shorts/b-UEHgNEkO8)
+* [Volume Knob Functionality](https://www.youtube.com/shorts/HMfL2WKNLts)
 
 # Hardware
 ## What you need
