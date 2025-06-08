@@ -4,7 +4,7 @@
 - The myLibrary.pretty folder contains additional footprints for the PCB.
 
 #### Files (within this directory): 
-- There are 3 important files in this directory:
-    capstone_3.kicad_pro - project file to edit files
-    capstone_3.kicad_pcb - board layout file
-    capstone_3.kicad_sch - schematic file
+- There are 3 important files in this directory:  
+    capstone_3.kicad_pro - project file to edit files  
+    capstone_3.kicad_pcb - board layout file  
+    capstone_3.kicad_sch - schematic file  
