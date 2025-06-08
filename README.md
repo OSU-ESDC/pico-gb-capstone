@@ -118,7 +118,7 @@ Then run this in the other window:
 arm-none-eabi-gdb
 (gdb) start_pico
 ```
-For tips on setting up debugging tools, follow the [arm GNU Toolchain setup guide](https://github.com/osu-esdc/Arm-GNU-Toolchain-Setup)
+For tips on setting up debugging tools, follow the [Arm GNU Toolchain setup guide](https://github.com/osu-esdc/Arm-GNU-Toolchain-Setup)
 
 
 # Known issues and limitations
