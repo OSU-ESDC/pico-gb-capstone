@@ -1,0 +1,22 @@
+### Footprint positions - created on 2025-04-24T14:03:54-0700 ###
+### Printed by KiCad version 9.0.1
+## Unit = mm, Angle = deg.
+## Side : top
+# Ref     Val         Package                                                         PosX       PosY       Rot  Side
+J1        Conn_01x05  PinHeader_1x05_P2.54mm_Vertical                             218.0000   -29.9200    0.0000  top
+J2        Conn_01x07  PinHeader_1x07_P2.54mm_Vertical                             186.0000  -140.3800    0.0000  top
+J3        Conn_01x20  PinHeader_1x20_P2.54mm_Vertical                             133.8200  -102.0000   90.0000  top
+J4        Conn_01x20  PinHeader_1x20_P2.54mm_Vertical                             133.9400  -135.0000   90.0000  top
+SW1       SW_Push     SW_PUSH_6mm                                                  77.5000   -69.5000    0.0000  top
+SW2       SW_Push     SW_PUSH_6mm                                                  63.2500   -56.7500    0.0000  top
+SW3       SW_Push     SW_PUSH_6mm                                                 151.0000   -82.5000    0.0000  top
+SW4       SW_Push     SW_PUSH_6mm                                                 166.9100  -145.6302    0.0000  top
+SW5       SW_Push     SW_PUSH_6mm                                                 135.1600  -146.3802    0.0000  top
+SW6       SW_Push     SW_PUSH_6mm                                                  78.2500   -47.2500    0.0000  top
+SW7       SW_Push     SW_PUSH_6mm                                                  91.5000   -57.5000    0.0000  top
+SW8       SW_Push     SW_PUSH_6mm                                                 164.0000   -69.5000    0.0000  top
+SW10      SW_MEC_5G   SW_DIP_SPSTx01_Slide_6.7x4.1mm_W7.62mm_P2.54mm_LowProfile   150.3550  -147.8927    0.0000  top
+U1        SC0915      SC0915_RPI                                                  157.8500  -117.8099   90.0000  top
+U2        ~           Eotary_Encoder                                               68.5000  -123.5000    0.0000  top
+U3        ~           Joystick                                                    233.0000  -110.0000    0.0000  top
+## End
